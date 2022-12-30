@@ -1,0 +1,190 @@
+// Q1
+db.country_wise_latest.aggregate([
+    { $group: { 
+        _id: 0, 
+        NewCases: { $sum: "$New cases"
+            }, 
+        NewDeaths: {$sum: "$New deaths"
+            }, 
+        NewRecovered: {$sum: "$New recovered"
+            }
+        }
+    }
+]);
+
+// Q2
+db.worldometer_data.aggregate(
+    { $match : { Continent : "Asia"
+    }
+},
+{ $project: {
+        "Country/Region": 1,
+        "TotalDeaths": 1,
+        "WHO Region": 1
+    }
+}
+).pretty();
+
+// Q3
+db.day_wise.aggregate(
+    { $match : { Date : "2020-02-12"
+    }
+},
+{ $group: { _id : null, sum : { $sum: "$Deaths"
+        }
+    }
+},
+{$project: { _id: 0, sum: 1
+    }
+}
+);
+
+// Q4
+db.country_wise_latest.aggregate(
+{
+    $sort: {
+        "Country/Region": -1
+    }
+},
+{$project: {
+        "Country/Region": 1,
+        "New deaths": "$New deaths",
+        "New recovered": "$New recovered",
+        "New cases": "$New cases",
+        "activeNewCases": {
+            "$subtract": [
+                "$New cases",
+                {
+                    "$add": [
+                        "$New deaths",
+                        "$New recovered"
+                    ]
+                }
+            ],
+        },
+    },
+},
+);
+
+// Q5
+db.country_wise_latest.find({
+    "Active": {$gt: 9000
+    },
+    "Deaths": {$gt: 800
+    }
+},
+{   _id: 0,
+    "Country/Region": 1,
+    "Active": 1,
+    "Deaths": 1
+});
+
+// Q6-(i)
+db.country_wise_latest.find({}).sort({
+    "Active": -1
+}).limit(1)
+
+// Q6-(ii)
+db.country_wise_latest.find({}).sort({
+    "Deaths / 100 Cases": -1
+}).skip(1).limit(1)
+
+// Q7
+db.country_wise_latest.aggregate(
+[
+    {$group: {
+        _id: null,
+        TotalDeaths: {$sum: "$Deaths"
+            }
+        }
+    }
+]
+);
+
+// Q8
+db.day_wise.aggregate([
+    {
+        "$match": {      Date: {
+                $gte: "2020-01-28",$lte: "2020-02-21"
+            }
+        }
+    },
+    {$group: {_id: 0, death_cases: {$sum: "$Deaths"
+            }, Active_cases: {$sum: "$Active"
+            }
+        }
+    }
+]);
+
+// Q9-(i)
+db.covid_19_clean_complete.find({
+    "Country/Region": {$regex: "ia$"
+    }
+},
+{   _id: 0,
+    "Country/Region": 1,
+    "Lat": 1,
+    "Long": 1
+});
+
+// Q9-(ii)
+db.covid_19_clean_complete.distinct("Country/Region",
+{
+    "Country/Region": {$regex: "ia$"
+    }
+},
+{   _id: null,
+    "Country/Region": 1
+}).length;
+
+// Q10
+db.full_grouped.find({
+    "Date": {$eq:new ISODate( "2020-03-30" )
+    },
+    "Active": {$gte: 0
+    }
+},
+{   _id: 0,
+    "Country/Region": 1,
+    "Active": 1,
+    "Date": 1
+});
+
+// Q11
+db.covid_19_clean_complete.aggregate(
+[
+    {
+     $match : {
+            "Active": { $gt: 100
+            }
+        },
+    },
+    {   $project: {_id: 0,
+            "Country/Region": 1,
+            "Lat": 1,
+            "Long": 1,
+            "Active": 1
+        }
+    }
+]
+);
+
+// Q12
+db.full_grouped.aggregate(
+{
+    $sort: {
+        "Active": 1,
+        "Country/Region": 1
+    }
+},
+{$group: {
+    _id: "$Country/Region",
+        "Date": {
+            "$first": "$Date"
+        },
+        "max_increase": {
+            "$max": "$Active"
+        }
+    },
+},
+);
